@@ -1,0 +1,26 @@
+# Renders every showcase scene and writes PNG screenshots (used for automated verification).
+# 依序算繪每個展示場景並輸出 PNG 截圖，供自動化驗證。
+變數 濾 = 匯入("/bottles/Aqua_Filament/main.aqua");
+變數 根 = 目前工作目錄 + "/..";
+變數 資產 = 根 + "/assets";
+變數 夜景 = 匯入(根 + "/scenes/night_street.aqua");
+變數 停車場 = 匯入(根 + "/scenes/materials.aqua");
+變數 街道 = 匯入(根 + "/scenes/materials.aqua");
+變數 頭盔 = 匯入(根 + "/scenes/flight_helmet.aqua");
+變數 折射 = 匯入(根 + "/scenes/refraction.aqua");
+停車場.設定("garage");
+街道.設定("street");
+變數 場景列表 = [夜景, 停車場, 街道, 頭盔, 折射];
+濾.開啟視窗({"標題":"capture", "寬度":960, "高度":540, "可見":假});
+迴圈 (變數 i = 0; i < 長度(場景列表); i++) {
+    濾.清除場景(假);
+    變數 開始 = 目前時間();
+    變數 場景 = 場景列表[i];
+    場景.建立(濾, 資產);
+    迴圈 (變數 f = 0; f < 12; f++) { 場景.更新(濾, 濾.繪製畫面()); }
+    變數 名稱 = ["capture_1_night_street.png", "capture_2_materials_garage.png", "capture_3_materials_street.png", "capture_4_flight_helmet.png", "capture_5_refraction.png"][i];
+    濾.截圖(名稱);
+    印出("CAPTURED", 名稱, 目前時間() - 開始);
+}
+濾.關閉視窗();
+印出("SHOWCASE_CAPTURE_OK");

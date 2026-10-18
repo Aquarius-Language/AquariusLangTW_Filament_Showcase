@@ -1,0 +1,5 @@
+dist/
+aqua.lock.json
+capture_*.png
+*.wasm
+tests/artifacts/

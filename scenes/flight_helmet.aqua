@@ -1,0 +1,35 @@
+# 飛行頭盔 · Khronos FlightHelmet glTF — KTX2 紋理、meshopt 壓縮、景深、陽光陰影
+# Flight Helmet: glTF 2.0 with KTX2/BasisU textures and meshopt geometry, depth of field, sun shadows.
+變數 Name = "Flight Helmet · glTF";
+變數 名稱 = "飛行頭盔 · glTF";
+變數 Hint = "Drag to orbit, wheel to zoom, F toggles depth of field / 拖曳旋轉、滾輪縮放、F 切換景深";
+變數 提示 = Hint;
+變數 景深 = 真;
+變數 對焦 = 1.0d;
+
+變數 Build, 建立 = 函式(濾, 資產) {
+    變數 環境 = 資產 + "/environments/flower_road/flower_road";
+    # The small (256²) skybox is intentionally soft, like a photographic background.
+    濾.載入環境光(環境 + "_ibl.ktx", 環境 + "_skybox_small.ktx", 32000);
+    濾.設定曝光(16, 1.0d / 125, 100);
+    濾.設定鏡頭(40, 0.02d, 100);
+    濾.加入太陽光([-0.45d, -0.55d, -0.7d], [1, 0.96d, 0.9d], 90000, {"陰影":{"貼圖尺寸":2048, "串接層數":1}});
+    變數 資訊 = 濾.載入模型(資產 + "/helmet/FlightHelmet.gltf", {"投射陰影":真, "接收陰影":真});
+    變數 c = 資訊["中心"];
+    對焦 = 1.25d;
+    濾.加入平面(20, 20, 濾.陰影接收材質(0.55d), {"投射陰影":假});
+    濾.設定畫面({"色調映射":"ACES", "飽和度":1.08d, "環境遮蔽":{"半徑":0.08d, "強度":1.0d}, "泛光":{"強度":0.05d},
+        "景深":{"啟用":真, "模糊圈縮放":3.0d, "對焦距離":對焦}, "抗鋸齒":"FXAA", "時間抗鋸齒":真, "陰影類型":"PCF", "暈影":假, "霧":假});
+    # Frame the full helmet and stand, with focus matching the camera distance.
+    濾.設定相機([c[0] + 0.416d, c[1] + 0.104d, c[2] + 1.17d], c, [0, 1, 0]);
+    濾.軌道控制({"目標":c, "縮放速度":0.02d});
+    回傳 資訊;
+};
+
+變數 Update, 更新 = 函式(濾, 幀) {
+    如果 (濾.按鍵剛按下("f")) {
+        景深 = !景深;
+        濾.設定畫面({"景深":{"啟用":景深, "模糊圈縮放":3.0d, "對焦距離":對焦}});
+    }
+    回傳 濾.無值;
+};

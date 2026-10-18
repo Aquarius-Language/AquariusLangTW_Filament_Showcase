@@ -1,0 +1,16 @@
+manifest_version = 1
+[project]
+name = "AquariusLangTW_Filament_Showcase"
+type = "executable"
+version = "1.0.0"
+entry = "main.aqua"
+sources = ["main.aqua", "scenes", "data", "tests"]
+platforms = ["windows", "linux", "web"]
+description = "星泉 × Filament 1.78.0 展示：夜間街景 (Bistro)、材質球、飛行頭盔、螢幕空間折射 / Filament samples showcase."
+license = "MIT"
+
+[dependencies]
+Aqua_Filament = { path = "../Aqua_Filament", version = ">= 1.0.0, < 2.0.0" }
+
+[[assets]]
+source = "assets"

@@ -1,0 +1,90 @@
+# 材質球 · Filament material_sphere — 8 組 CC0 PBR 貼圖（KTX2/BasisU）＋ 金屬、塑膠、清漆、陶瓷等參數材質
+# Material spheres: textured CC0 PBR sets plus metals, plastics, clear-coat and ceramics; IBL + sun shadows.
+變數 Name = "Materials";
+變數 名稱 = "材質球";
+變數 Hint = "Drag to orbit, right-drag to pan, wheel to zoom, R rotates / 拖曳旋轉、右鍵平移、滾輪縮放、R 自轉";
+變數 提示 = Hint;
+變數 Arrays = 匯入("Array");
+變數 變體 = "garage";
+變數 球列表 = [];
+變數 自轉 = 假;
+
+# variant: "garage" (parking garage HDR) or "street" (Venetian cobblestone street HDR).
+變數 Configure, 設定 = 函式(變體名稱) {
+    變體 = 變體名稱;
+    如果 (變體 == "garage") { Name = "Materials · parking garage"; 名稱 = "材質球 · 地下停車場"; }
+    否則 { Name = "Materials · cobblestone street"; 名稱 = "材質球 · 石板街道"; }
+    回傳 變體;
+};
+
+# [名稱, 參數] — every set uses the same built-in standard material.
+變數 參數材質 = [
+    ["金 Gold", {"基礎色":[1.0d, 0.766d, 0.336d, 1], "金屬度":1, "粗糙度":0.18d}],
+    ["銅 Copper", {"基礎色":[0.955d, 0.638d, 0.538d, 1], "金屬度":1, "粗糙度":0.28d}],
+    ["鉻 Chrome", {"基礎色":[0.972d, 0.960d, 0.915d, 1], "金屬度":1, "粗糙度":0.04d}],
+    ["鋁 Brushed aluminium", {"基礎色":[0.913d, 0.922d, 0.924d, 1], "金屬度":1, "粗糙度":0.42d}],
+    ["黃銅 Brass", {"基礎色":[0.91d, 0.78d, 0.42d, 1], "金屬度":1, "粗糙度":0.08d}],
+    ["鐵 Iron", {"基礎色":[0.56d, 0.57d, 0.58d, 1], "金屬度":1, "粗糙度":0.55d}],
+    ["紅色烤漆 Red car paint", {"基礎色":[0.75d, 0.03d, 0.02d, 1], "金屬度":0.6d, "粗糙度":0.35d, "清漆":1, "清漆粗糙度":0.03d}],
+    ["藍色塑膠 Blue plastic", {"基礎色":[0.02d, 0.25d, 0.9d, 1], "粗糙度":0.12d, "清漆":0.6d}],
+    ["黑色鋼琴漆 Piano black", {"基礎色":[0.012d, 0.012d, 0.014d, 1], "粗糙度":0.25d, "清漆":1, "清漆粗糙度":0.0d}],
+    ["白瓷 Porcelain", {"基礎色":[0.92d, 0.91d, 0.88d, 1], "粗糙度":0.22d, "清漆":1, "清漆粗糙度":0.05d}],
+    ["橡膠 Rubber", {"基礎色":[0.03d, 0.03d, 0.03d, 1], "粗糙度":0.9d}],
+    ["翡翠綠 Jade", {"基礎色":[0.08d, 0.45d, 0.25d, 1], "粗糙度":0.3d, "清漆":0.4d}],
+    ["橘色塑膠 Orange plastic", {"基礎色":[0.95d, 0.35d, 0.03d, 1], "粗糙度":0.45d}],
+    ["霧面紫 Matte violet", {"基礎色":[0.35d, 0.12d, 0.6d, 1], "粗糙度":0.75d}],
+    ["鈦 Titanium", {"基礎色":[0.616d, 0.582d, 0.544d, 1], "金屬度":1, "粗糙度":0.3d}],
+    ["鈷藍金屬 Cobalt metallic", {"基礎色":[0.15d, 0.3d, 0.85d, 1], "金屬度":1, "粗糙度":0.25d, "清漆":1}],
+    ["粉紅珠光 Pearl pink", {"基礎色":[0.95d, 0.6d, 0.7d, 1], "金屬度":0.3d, "粗糙度":0.2d, "清漆":1}],
+    ["石墨 Graphite", {"基礎色":[0.15d, 0.15d, 0.16d, 1], "金屬度":0.5d, "粗糙度":0.6d}],
+    ["奶油黃 Butter", {"基礎色":[0.98d, 0.85d, 0.4d, 1], "粗糙度":0.35d}],
+    ["鏡面 Mirror", {"基礎色":[0.98d, 0.98d, 0.98d, 1], "金屬度":1, "粗糙度":0.0d}],
+    ["青銅 Bronze", {"基礎色":[0.8d, 0.5d, 0.3d, 1], "金屬度":1, "粗糙度":0.38d}],
+    ["薄荷 Mint", {"基礎色":[0.45d, 0.9d, 0.75d, 1], "粗糙度":0.5d}]
+];
+變數 貼圖組 = ["Blue_tiles_01", "Copper_tiles_01", "Dirty_gold_01", "Metal_weave_01", "Moss_01", "Parquet_flooring_05", "Sandy_gravel_01", "Striped_cotton_01"];
+
+變數 Build, 建立 = 函式(濾, 資產) {
+    變數 環境 = "parking_garage";
+    # Leave room for the complete front row instead of clipping its outer spheres.
+    變數 相機眼 = [0.3d, 2.1d, 4.7d];
+    如果 (變體 == "street") { 環境 = "venetian_crossroads"; 相機眼 = [3.5d, 3.3d, 4.4d]; }
+    變數 環境目錄 = 資產 + "/environments/" + 環境 + "/" + 環境;
+    濾.載入環境光(環境目錄 + "_ibl.ktx", 環境目錄 + "_skybox.ktx", 30000);
+    濾.設定曝光(16, 1.0d / 125, 100);
+    濾.設定鏡頭(45, 0.05d, 200);
+    濾.加入太陽光([-0.45d, -0.75d, -0.6d], [1, 0.97d, 0.92d], 50000, {"陰影":{"貼圖尺寸":2048, "串接層數":2}});
+    # Shadow catcher ground: the HDR background shows through, only shadows are drawn.
+    濾.加入平面(60, 60, 濾.陰影接收材質(0.75d), {"投射陰影":假});
+    變數 實例 = [];
+    迴圈 (變數 t = 0; t < 長度(貼圖組); t++) {
+        變數 n = 資產 + "/textures/" + 貼圖組[t];
+        Arrays.Append(實例, 濾.貼圖材質(n + "_color.ktx2", n + "_normal.ktx2", n + "_orm.ktx2", {"UV縮放":[2, 2]}));
+    }
+    迴圈 (變數 p = 0; p < 長度(參數材質); p++) { Arrays.Append(實例, 濾.標準材質(參數材質[p][1])); }
+    球列表 = [];
+    變數 欄 = 6;
+    變數 縮放 = 0.42d;
+    變數 間距 = 0.78d;
+    迴圈 (變數 i = 0; i < 長度(實例); i++) {
+        變數 列 = i / 欄;
+        變數 行 = i % 欄;
+        變數 x = (行 - 2.5d) * 間距 + (列 % 2) * 0.2d;
+        變數 z = 1.2d - 列 * 間距;
+        Arrays.Append(球列表, 濾.載入網格(資產 + "/meshes/material_sphere.filamesh", 實例[i],
+            {"位置":[x, 0.576d * 縮放, z], "縮放":縮放, "旋轉":[0, (行 - 2.5d) * -8, 0]}));
+    }
+    濾.設定畫面({"色調映射":"ACES", "環境遮蔽":{"半徑":0.25d, "強度":1.2d}, "泛光":{"強度":0.04d}, "抗鋸齒":"FXAA",
+        "時間抗鋸齒":真, "陰影類型":"PCF", "暈影":假, "霧":假});
+    濾.設定相機(相機眼, [0, 0.15d, -0.4d], [0, 1, 0]);
+    濾.軌道控制({"目標":[0, 0.15d, -0.4d], "縮放速度":0.05d});
+    回傳 長度(實例);
+};
+
+變數 Update, 更新 = 函式(濾, 幀) {
+    如果 (濾.按鍵剛按下("r")) { 自轉 = !自轉; }
+    如果 (自轉) {
+        迴圈 (變數 i = 0; i < 長度(球列表); i++) { 濾.設定旋轉(球列表[i], [0, 幀["時間"] * 30 + i * 12, 0]); }
+    }
+    回傳 濾.無值;
+};
