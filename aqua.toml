@@ -10,7 +10,7 @@ description = "星泉 × Filament 1.78.0 展示：夜間街景 (Bistro)、材質
 license = "MIT"
 
 [dependencies]
-Aqua_Filament = { path = "../Aqua_Filament", version = ">= 1.0.0, < 2.0.0" }
+Aqua_Filament = { path = "../Aqua_Filament", version = ">= 1.0.2, < 2.0.0" }
 
 [[assets]]
 source = "assets"

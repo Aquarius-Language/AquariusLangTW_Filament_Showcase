@@ -23,7 +23,7 @@ const {resolve, extname, basename, sep} = require('node:path');
   let browser;
   try {
     browser = await chromium.launch({channel: process.env.WEBGL_BROWSER || 'msedge', headless: true,
-      args: process.env.WEBGL_ANGLE ? [`--use-angle=${process.env.WEBGL_ANGLE}`] : []});
+      args: [...(process.env.WEBGL_COLD ? ['--disable-gpu-shader-disk-cache'] : []), ...(process.env.WEBGL_ANGLE ? [`--use-angle=${process.env.WEBGL_ANGLE}`] : [])]});
     const page = await browser.newPage({viewport:{width:960,height:540}});
     const errors = [];
     page.on('console', msg => { console.log(msg.type(), msg.text()); if (msg.type() === 'error') errors.push(msg.text()); });
@@ -40,11 +40,12 @@ const {resolve, extname, basename, sep} = require('node:path');
       window.aquarius.run('tests/capture_web.aqua').catch(e => console.error(e.message));
     });
     await page.waitForSelector('#surfaces canvas', {timeout:120000});
-    console.log('GPU', await page.evaluate(() => {
+    const renderer = await page.evaluate(() => {
       const gl = document.querySelector('#surfaces canvas').getContext('webgl2');
       const debug = gl.getExtension('WEBGL_debug_renderer_info');
       return debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
-    }));
+    });
+    console.log('GPU', renderer);
     await page.waitForFunction(() => ['finished','error'].includes(window.aquarius.state), null, {timeout:180000});
     const result = await page.evaluate(() => ({state:window.aquarius.state,
       error:document.querySelector('#error').textContent, lost:globalThis.renderContextLosses,
@@ -58,6 +59,13 @@ const {resolve, extname, basename, sep} = require('node:path');
       assert(bytes.length > 10000, `Blank or missing scene: ${shot.path}`);
       writeFileSync(resolve(output, basename(shot.path)), bytes);
     }
+    assert.match(await page.locator('#output').textContent(), /SHOWCASE_WEB_CAPTURE_OK/);
+    if (process.env.REQUIRE_RENDERER) assert.match(renderer, new RegExp(process.env.REQUIRE_RENDERER, 'i'));
+    const report = {passed:true, browser:process.env.WEBGL_BROWSER || 'msedge', angle:process.env.WEBGL_ANGLE || 'default',
+      coldShaderCache:!!process.env.WEBGL_COLD, renderer, contextLosses:result.lost, captures:result.shots.map(s => basename(s.path)), errors};
+    const reportFile = process.env.WEBGL_REPORT || resolve(output, 'browser-validation.json');
+    mkdirSync(resolve(reportFile, '..'), {recursive:true});
+    writeFileSync(reportFile, JSON.stringify(report, null, 2) + '\n');
     console.log('PASS: all five web scenes rendered without a lost context or console error');
   } finally {
     if (browser) await browser.close();

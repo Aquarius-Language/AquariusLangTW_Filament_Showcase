@@ -38,7 +38,7 @@ aqua bottle restore --project .                       # 解析 Aqua_Filament 相
 aqua build . --target windows -o dist\showcase.exe    # Windows x64
 aqua build . --target linux -o dist/showcase          # Linux x64（X11 / XWayland）
 aqua build . --target web -o dist\web                 # 網頁 WebGL 2；請用 localhost 或 HTTPS 開啟
-node tools/serve_web.mjs                              # 本機網頁：Edge 獨立設定檔＋Vulkan / local Edge + Vulkan
+node tools/serve_web.mjs                              # 本機網頁：Edge 獨立設定檔 / local Edge with its default backend
 ```
 
 注意事項 / Notes：
@@ -47,28 +47,28 @@ node tools/serve_web.mjs                              # 本機網頁：Edge 獨�
   WebGL 2 上很吃效能，建議使用獨立顯示卡。
 - 主程式 wasm 的大小依目標平台而異，資產會內嵌在桌面版執行檔中，並受星泉 256 MiB 上限限制。若要再加入大型資產，
   請考慮從執行期資料夾載入。
-- 修改 `../Aqua_Filament` 後若出現「already cached with different contents」或「does not match locked」，
-  請執行 `aqua bottle cache remove Aqua_Filament 1.0.0` 並刪除 `aqua.lock.json`。
+- 函式庫套件版本不可覆寫；修改 `../Aqua_Filament` 後請提升套件版本，再執行
+  `aqua bottle update --project . --target web` 更新鎖定版本並重新建置。
 - 自動截圖測試：`aqua build . --platform windows -o dist\app.wasm` 之後執行 `aqua run dist\app.wasm --entry tests/capture.aqua`，
   會輸出五張 `capture_*.png`。網頁版 `tests/capture_web.aqua` 同樣驗證五個場景，包含 Bistro。
 
 Aqua_Filament 1.0.1 修正 Windows 高 DPI 下視口遭裁切的問題；已在 250% 縮放驗證固定、軌道與飛行相機。
 
-在這台雙 GPU Windows 電腦上，Edge 的 Direct3D 11 WebGL 路徑會在 Bistro 啟動時中斷 GPU 程序，
-後續顯示 `base_lit_masked` 連結失敗及 `CONTEXT_LOST_WEBGL`。Intel 與 NVIDIA 的 Direct3D 路徑皆可重現；
-NVIDIA Vulkan 與 SwiftShader 可完整通過五個場景。`node tools/serve_web.mjs` 以獨立 Edge 設定檔
-選用 Vulkan，保留硬體加速與所有場景效果。這不會更改 Edge 的全域 ANGLE 設定。
-此啟動器需要 Node.js 與 Microsoft Edge；`--no-open` 可只啟動本機伺服器。
-Windows 也可直接執行專案根目錄的 `run-web.cmd`。
+Aqua_Filament **1.0.2** 已修正 ANGLE Direct3D 11 的 uniform-buffer 資源槽越界問題。
+網頁匯出會自動包含修正，使用預設 Intel Direct3D 後端即可完整算繪五個場景。
+不再需要 Vulkan 啟動旗標或調整瀏覽器全域設定。已鎖定舊版的專案需要更新相依版本並重新建置。
+`node tools/serve_web.mjs` 使用獨立 Edge 設定檔與瀏覽器預設後端；`--no-open` 只啟動伺服器。
+Windows 也可執行 `run-web.cmd`。
 
-Windows 250% scaling now uses a matching WGL driver-thread DPI mode, so the full camera viewport is visible.
-For the browser GPU-process failure reproduced here on Direct3D 11, run `node tools/serve_web.mjs` to use
-hardware Vulkan in a separate Edge profile. The website still renders through WebGL 2.
+The shared Aqua_Filament 1.0.2 web runtime fixes the ANGLE/D3D11 uniform-buffer binding crash while
+preserving every scene, light, effect and buffer element. The launcher now uses Edge's default backend.
+Existing projects should require Aqua_Filament >=1.0.2, run `aqua bottle update --project . --target web`,
+and rebuild. Native Windows/Linux binaries are unchanged.
 
 網頁回歸測試（需要 Playwright，或以 `NODE_PATH` 指向既有安裝）：
 
 ```powershell
-$env:WEBGL_ANGLE = "vulkan"
+$env:WEBGL_BROWSER = "msedge"
 node tests/verify_web.cjs
 ```
 
@@ -100,7 +100,7 @@ holds the Bistro pipeline and `gen_lights.py`, which regenerates `data/bistro_li
 ## 專案結構 / Layout
 
 ```
-aqua.toml            Bottle 設定（相依 Aqua_Filament ≥1.0.0 <2.0.0；assets 目錄）
+aqua.toml            Bottle 設定（相依 Aqua_Filament ≥1.0.2 <2.0.0；assets 目錄）
 main.aqua            場景切換、標題列幀率
 scenes/              五個場景模組（建立 / 更新 / 名稱）
 data/                Bistro 光源列表

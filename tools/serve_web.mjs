@@ -1,4 +1,4 @@
-// Serve the web export locally and open a separate Edge profile using hardware Vulkan.
+// Serve the web export locally and open a separate Edge profile using the browser default backend.
 // Usage: node tools/serve_web.mjs [--port=8765] [--no-open]
 import {createServer} from 'node:http';
 import {createReadStream, existsSync, mkdirSync, statSync} from 'node:fs';
@@ -32,9 +32,9 @@ server.listen(port, '127.0.0.1', () => {
   const edge = [process.env['ProgramFiles(x86)'], process.env.ProgramFiles]
     .filter(Boolean).map(p => resolve(p, 'Microsoft/Edge/Application/msedge.exe')).find(existsSync);
   if (!edge) { console.log('Microsoft Edge was not found. Open the URL in a browser with a working WebGL backend.'); return; }
-  const profile = resolve(project, 'dist/edge-vulkan-profile');
+  const profile = resolve(project, 'dist/edge-showcase-profile');
   mkdirSync(profile, {recursive:true});
-  const browser = spawn(edge, [`--user-data-dir=${profile}`, '--use-angle=vulkan', '--no-first-run', '--no-default-browser-check', '--new-window', url],
+  const browser = spawn(edge, [`--user-data-dir=${profile}`, '--no-first-run', '--no-default-browser-check', '--new-window', url],
     {detached:true, windowsHide:true, stdio:'ignore'});
   browser.on('error', error => console.error(`Cannot open Edge: ${error.message}`));
   browser.unref();
